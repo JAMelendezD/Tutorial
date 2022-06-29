@@ -1,5 +1,5 @@
 from time import time
-from project_euler import *
+from euler import *
 
 
 GREEN = '\u001b[32m'
@@ -35,10 +35,10 @@ for key in solutions.keys():
     taken = time() - t1
 
     if result == solutions[key][0]:
-        print(f'Problem {key}: \t {GREEN} Passed {RESET}', end = '')
+        print(f'Problem {key:2d}: \t {GREEN} Passed {RESET}', end = '')
         if taken > solutions[key][1]:
             print(f'\t {YELLOW} Suboptimal {RESET} took {taken:6.4f} seconds could take {solutions[key][1]:6.4f} seconds')
         else:
             print(f'\t {GREEN} Optimal {RESET} took {taken:6.4f} seconds')
     else:
-        print(f'Problem {key}: \t {RED} Failed {RESET}')
+        print(f'Problem {key:2d}: \t {RED} Failed {RESET}')
