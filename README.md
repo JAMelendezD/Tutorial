@@ -1,5 +1,18 @@
 # Introduction to Coding
 
+The first thing to do is to clone the repository into your local machine to do this
+type the following (if you get and error you probably to install git)
+
+```
+git clone https://github.com/JAMelendezD/Tutorial
+```
+
+Now we have to go inside the folder of the repository for this do
+
+```
+cd Tutorial
+```
+
 ## Basic
 
 To start with a short introduction to python start with the `basics.ipynb`.
@@ -48,6 +61,7 @@ optimal solutions.
 
 ## Introduction Object-Oriented
 
+## 
 
 
 ## Useful applications 
