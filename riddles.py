@@ -55,7 +55,7 @@ def prison_paths(n):
 def main():
 
     simulations = 1_000_000
-    num_prisoners = 14
+    num_prisoners = 100
     mode = 0
 
     p = 0

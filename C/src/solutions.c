@@ -1,11 +1,26 @@
+// -----------------------------------------------------------------------------
+//           Julian Melendez Solutions to the Euler Project   (2022)
+// -----------------------------------------------------------------------------
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include "../include/solutions.h"
 
+void swap (int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void randomize (int arr[], int n) {
+    for (int i = n - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        swap(&arr[i], &arr[j]);
+    }
+}
 
 int problem_1() {
     int n = 1000;
@@ -113,4 +128,79 @@ int problem_6() {
         sum_squared += i;
     }
     return pow(sum_squared, 2) - squares_sum;
+}
+
+int problem_7() {
+    int n = 10;
+    int *boxes = malloc(n * sizeof(int));
+    int *selections = malloc(n * sizeof(int));
+    float p = 0;
+    int num_sims = 10000000;
+    int found;
+    srand(time(0));
+
+    for (int i = 0; i < n; i++) {
+        boxes[i] = i;
+        selections[i] = i;
+    }
+
+    printf("\n");
+
+    for (int sim = 0; sim < num_sims; sim++) {
+        found = 0;
+        randomize(boxes, n);
+        for (int i = 0; i < n; i++) {
+            randomize(selections, n);
+            for (int j = 0; j < n / 2; j++) {
+                if (i == boxes[selections[j]]) {
+                    found += 1;
+                    break;
+                }
+            }
+        }
+        if (found == n) {
+            p += 1;
+        }
+        printf("\033[FSimulation # %10d alive %10.8f%%\n", sim + 1, p * 100 / (sim + 1));
+    }
+    return 0;
+}
+
+int problem_8() {
+    int n = 10;
+    int *boxes = malloc(n * sizeof(int));
+    int selection;
+    float p = 0;
+    int num_sims = 10000000;
+    int found;
+    int attempts;
+    srand(time(0));
+
+    for (int i = 0; i < n; i++) {
+        boxes[i] = i;
+    }
+
+    printf("\n");
+
+    for (int sim = 0; sim < num_sims; sim++) {
+        found = 0;
+        randomize(boxes, n);
+        for (int i = 0; i < n; i++) {
+            selection = i;
+            attempts = 0;
+            while (attempts < n / 2) {
+                if (i == boxes[selection]) {
+                    found += 1;
+                    break;
+                }
+                selection = boxes[selection];
+                attempts += 1;
+            }
+        }
+        if (found == n) {
+            p += 1;
+        }
+        printf("\033[FSimulation # %10d alive %10.8f%%\n", sim + 1, p * 100 / (sim + 1));
+    }
+    return 0;
 }
