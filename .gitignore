@@ -3,3 +3,5 @@ __pycache__/
 project_euler.py
 C/build/euler
 C/obj/*.o
+tinker/build/analyze_arc
+tinker/obj/*.o
