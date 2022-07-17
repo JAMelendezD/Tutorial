@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct node {    
+struct node {
     int value;
     struct node *next;
 };
@@ -11,7 +11,7 @@ typedef struct node node_l;
 void printlist(node_l *head) {
     node_l *tmp = head;
     int counter = 1;
-    while(tmp != NULL) {
+    while (tmp != NULL) {
         printf("%5d (%p) -> ", tmp->value, tmp->next);
         tmp = tmp->next;
         if (counter % 4 == 0) {
@@ -73,14 +73,12 @@ void remove_node(node_l **head, node_l *node_to_remove) {
 }
 
 int main(int argc, char **argv) {
-
     node_l *head = NULL;
     node_l *tmp;
 
     for (int i = 0; i < 10; i++) {
         tmp = create_new_node(i);
         insert_at_head(&head, tmp);
-
     }
 
     tmp = find_node(head, 5);
@@ -90,5 +88,4 @@ int main(int argc, char **argv) {
     printlist(head);
     remove_node(&head, tmp);
     printlist(head);
-
 }
