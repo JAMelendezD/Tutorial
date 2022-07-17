@@ -8,6 +8,9 @@
 
 #include "../include/tools.h"
 
+/*
+ * Gets the number of atoms from the first line of the arc file
+ */
 int get_num_atoms(char *arc) {
     FILE *f;
     f = fopen(arc, "r");
@@ -19,6 +22,10 @@ int get_num_atoms(char *arc) {
     return n;
 }
 
+/*
+ * Calculates the number of bytes in one frame based on the number of atoms
+ * plus a header of 2 this doesnt work for NVE
+ */
 int get_frame_bytes(char *arc, int num_atoms) {
     FILE *f;
     int num_lines = 0;
