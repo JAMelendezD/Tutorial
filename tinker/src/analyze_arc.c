@@ -112,12 +112,12 @@ int main(int argc, char **argv) {
     update_frame(arc_frame, arc_file, 0, frame_size);
 
     // Computes the mass of the system based on the first frame
-    double volume;
     mass = compute_mass(arc_frame);
     printf("# Mass of the system %f\n", mass);
 
     // Main loop to do any analisis
-    double density;
+    // double density;
+    // double volume;
     for (int i = b; i <= e; i++) {
         update_frame(arc_frame, arc_file, i * frame_size, frame_size);
         // print_frame(arc_frame);
