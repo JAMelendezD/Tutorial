@@ -4,28 +4,34 @@
 #define DIM 3
 #define HEADER 2
 #define AU_TO_GCC 1.6605402
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 
 typedef struct Atom {
     int index;
     char name[5];
-    double x;
-    double y;
-    double z;
+    double pos[3];
     int type;
 } Atom;
 
 typedef struct Frame {
     Atom *atoms;
     int num_atoms;
-    double box_x;
-    double box_y;
-    double box_z;
+    double box[3];
 } Frame;
 
 typedef struct Map {
     char *key;
     double value;
 } Map;
+
+typedef struct Rdf {
+    float r_min;
+    float r_max;
+    float dr;
+    int num_bins;
+    float *g_r;
+    float *n_r;
+} Rdf;
 
 /*
  * Initializes an atom struct
@@ -36,6 +42,11 @@ Atom *create_atom();
  * Initializes frame struct and fills it with a given number of atoms
  */
 Frame *create_frame(int num_atoms);
+
+/*
+ * Initializes rdf struct
+ */
+Rdf *create_rdf(float min, float max, float step);
 
 /*
  * Uses strtok to split a atom line into the appropriate fields of the
@@ -71,6 +82,16 @@ void print_frame(Frame *fr);
 void compute_com(Frame *fr, int frame);
 
 /*
+ * Computes distances of all atoms to a selected one for a given frame
+ */
+double *compute_distance(Frame *fr, int selected);
+
+/*
  * Computes the mass of the system for a given frame
  */
 double compute_mass(Frame *fr);
+
+/*
+ *
+ */
+void compute_rdf(Frame *fr, Rdf *rdf, int selected);

@@ -116,24 +116,31 @@ int main(int argc, char **argv) {
 
     // Creates a frame and loads it with the first frame
     Frame *arc_frame = create_frame(num_atoms);
-    update_frame(arc_frame, arc_file, 0, frame_size);
+    update_frame(arc_frame, arc_file, b * frame_size, frame_size);
+
+    // print_frame(arc_frame);
 
     // Computes the mass of the system based on the first frame
     mass = compute_mass(arc_frame);
     printf("# Mass of the system %f\n", mass);
 
     // Main loop to do any analisis
-    // double density;
-    // double volume;
+    // Center of mass example
     for (int i = b; i <= e; i++) {
         update_frame(arc_frame, arc_file, i * frame_size, frame_size);
-        // print_frame(arc_frame);
         compute_com(arc_frame, i);
-        // volume = arc_frame->box_x * arc_frame->box_y * arc_frame->box_z;
-        // density = (mass / volume) * AU_TO_GCC;  // Convert from u/A to g/cc
-        // printf("%8d %10.6f\n", i, density);
-        // printf("#########################################################\n");
     }
     fclose(arc_file);
     free(arc_frame);
+
+    // Main loop to do any analisis
+    // Center of mass example
+    // Rdf *na_rdf = create_rdf(1.0, arc_frame->box[0] / 2.0, 0.2);
+    // int selected = 3;
+    // for (int i = b; i <= e; i++) {
+    //     update_frame(arc_frame, arc_file, i * frame_size, frame_size);
+    //     compute_rdf(arc_frame, na_rdf, selected);
+    // }
+    // fclose(arc_file);
+    // free(arc_frame);
 }

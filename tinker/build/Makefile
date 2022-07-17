@@ -1,7 +1,7 @@
 SRC = ../src
 IDIR = ../include
 CC = gcc
-CFLAGS = -g -I$(IDIR) -Wall
+CFLAGS = -g -I$(IDIR) -Wall -O2
 
 ODIR = ../obj
 LDIR = ../lib
