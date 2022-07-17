@@ -5,3 +5,5 @@ C/build/euler
 C/obj/*.o
 tinker/build/analyze_arc
 tinker/obj/*.o
+tinker/data/*.arc
+tinker/data/*.dyn
