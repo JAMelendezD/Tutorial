@@ -52,6 +52,15 @@ Rdf *create_rdf(float min, float max, float step) {
     return rdf;
 }
 
+int is_number(char *str) {
+    if (*str == '\0') return 0;
+    while (*str != '\0') {
+        if (!isdigit(*str)) return 0;
+        str++;
+    }
+    return 1;
+}
+
 void split_atom(Atom *atom, char *line) {
     char *token;
     token = strtok(line, " ");  // Used to point the the next token
@@ -78,7 +87,7 @@ void split_box(Frame *fr, char *line) {
     fr->box[2] = atof(token);
 }
 
-void update_frame(Frame *fr, FILE *f, long begin, long num_bytes) {
+void update_frame(Frame *fr, FILE *f, long begin, int *sele) {
     char c;
     int num_lines = 0;
     int bytes = 0;

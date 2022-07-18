@@ -3,6 +3,7 @@
 #define BUFFER 1000
 #define DIM 3
 #define HEADER 2
+#define MAXINDEX 10000000
 #define AU_TO_GCC 1.6605402
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -48,6 +49,8 @@ Frame *create_frame(int num_atoms);
  */
 Rdf *create_rdf(float min, float max, float step);
 
+int is_number(char *str);
+
 /*
  * Uses strtok to split a atom line into the appropriate fields of the
  * Atom struct
@@ -64,7 +67,7 @@ void split_box(Frame *fr, char *line);
  * Uses seek to find figure out where to start reading the arc file.
  * Reads the atom in that frame and updates the frame struct.
  */
-void update_frame(Frame *fr, FILE *f, long begin, long num_bytes);
+void update_frame(Frame *fr, FILE *f, long begin, int *sele);
 
 /*
  * Gets the fields from the atom struct and prints them
