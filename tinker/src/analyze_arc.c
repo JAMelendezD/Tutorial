@@ -89,10 +89,10 @@ int *get_indeces(char *ndx, int num, int *size) {
 }
 
 void print_options(Map *options, int num) {
+    printf("\n");
     for (int i = 0; i < num; i++) {
         printf("%5d %30s\n", (int)options[i].value, options[i].key);
     }
-    return;
 }
 
 /*
@@ -113,11 +113,12 @@ int get_num_atoms(char *arc) {
  * Calculates the number of bytes in one frame based on the number of
  * atoms plus a header of 2 this doesnt work for NVE
  */
-int get_frame_bytes(char *arc, int num_atoms) {
+long get_frame_bytes(char *arc, int num_atoms) {
     FILE *f;
     int num_lines = 0;
-    int bytes = 0;
+    long bytes = 0;
     char c;
+
     f = fopen(arc, "r");
     while (num_lines < num_atoms + HEADER) {
         c = fgetc(f);
@@ -126,7 +127,39 @@ int get_frame_bytes(char *arc, int num_atoms) {
             num_lines++;
         }
     }
+    fclose(f);
     return bytes;
+}
+
+/*
+ * Calculates the number of bytes in one frame based on the number of
+ * atoms plus a header of 2 this doesnt work for NVE
+ */
+long *get_selection_offsets(char *arc, int *selection, int num_atoms,
+                            int selection_size) {
+    FILE *f;
+    int num_lines = 0;
+    char c;
+    long bytes = 0;
+    long *byte_arr = calloc(selection_size, sizeof(long));
+
+    f = fopen(arc, "r");
+    while (num_lines < num_atoms + HEADER) {
+        c = fgetc(f);
+        bytes++;
+
+        if (c == '\n') {
+            for (int i = 0; i < selection_size; i++) {
+                if ((num_lines - HEADER) == selection[i] - 1) {
+                    byte_arr[i] = bytes;
+                    break;
+                }
+            }
+            num_lines++;
+        }
+    }
+    fclose(f);
+    return byte_arr;
 }
 
 void usage(char *name) {
@@ -142,16 +175,17 @@ int main(int argc, char **argv) {
     char *arc = malloc(BUFFER);  // arc file name
     char *ndx = malloc(BUFFER);  // index file name
     int *indeces;                // array of int for index selection
-    FILE *arc_file;              // arc file
     Map *options;                // map number to index group name
+    FILE *arc_file;              // arc file pointer
     int num_options = 0;         // number of groups in index
     long b = 0;                  // first frame
-    long e = 1;                  // last frame
-    long frame_size;             // Number of bytes of a frame
+    long e = 1e10;               // last frame
+    long frame_size = 0;         // Number of bytes of a frame
+    long *offsets;               // int array of offsets
     int selection = 0;           // Number of selected group
-    int selection_size;          // Size of the selection
+    int selection_size = 0;      // Size of the selection
 
-    if (argc != 9) {
+    if (argc < 5) {
         usage(argv[0]);
     }
 
@@ -205,22 +239,21 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Reads index file to figure out available options
     options = read_index(ndx, &num_options);
     print_options(options, num_options);
+    printf("\n# Select a group from the options: ");
+    scanf("%3d", &selection);
 
-    scanf("%d", &selection);
-
+    // Check if user input is a valid selection
     if (selection < 0 || selection >= num_options) {
         printf("Invalid selection\n");
         exit(1);
     }
 
+    // Based on user input creates an array with the indeces
     indeces = get_indeces(ndx, selection, &selection_size);
     printf("# Number of atoms in selection: %d\n", selection_size);
-
-    // Open an leaves arc file open based on argument
-    arc_file = fopen(arc, "r");
-    printf("# Arc file: %s\n", arc);
 
     // Computes the number of atoms based on the first line
     int num_atoms = get_num_atoms(arc);
@@ -231,33 +264,25 @@ int main(int argc, char **argv) {
     frame_size = get_frame_bytes(arc, num_atoms);
     printf("# Number of bytes per frame: %ld\n", frame_size);
 
-    // // Creates a frame and loads it with the first frame
+    // Creates byte offsets based one selection to be used with fseek
+    offsets = get_selection_offsets(arc, indeces, num_atoms, selection_size);
+
+    // Open an leaves arc file open based on argument
+    arc_file = fopen(arc, "r");
+    printf("# Arc file: %s\n", arc);
+
+    // // Creates a frame
     Frame *arc_frame = create_frame(selection_size);
-    update_frame(arc_frame, arc_file, b * frame_size, selection);
-
-    print_frame(arc_frame);
-
-    // // Computes the mass of the system based on the first frame
-    // mass = compute_mass(arc_frame);
-    // printf("# Mass of the system %f\n", mass);
-
-    // // Main loop to do any analisis
-    // // Center of mass example
-    // for (int i = b; i <= e; i++) {
-    //     update_frame(arc_frame, arc_file, i * frame_size,
-    //     frame_size); compute_com(arc_frame, i);
-    // }
-    // fclose(arc_file);
-    // free(arc_frame);
 
     // Main loop to do any analisis
     // Center of mass example
-    // Rdf *na_rdf = create_rdf(1.0, arc_frame->box[0] / 2.0, 0.2);
-    // int selected = 3;
-    // for (int i = b; i <= e; i++) {
-    //     update_frame(arc_frame, arc_file, i * frame_size,
-    //     frame_size); compute_rdf(arc_frame, na_rdf, selected);
-    // }
-    // fclose(arc_file);
-    // free(arc_frame);
+    for (int i = b; i <= e; i++) {
+        update_frame(arc_frame, arc_file, i * frame_size, selection_size,
+                     offsets);
+        print_frame(arc_frame);
+        // compute_com(arc_frame);
+        // compute_distance(arc_frame, 0);
+    }
+    fclose(arc_file);
+    free(arc_frame);
 }

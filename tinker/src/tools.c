@@ -4,6 +4,7 @@
 
 #include "../include/tools.h"
 
+#include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -11,16 +12,13 @@
 #include <string.h>
 
 Map mass_map[] = {
-    {"H", 1.0078},
-    {"C", 12.011},
-    {"N", 14.007},
-    {"O", 15.999},
+    {"H", 1.0078}, {"C", 12.011}, {"N", 14.007}, {"O", 15.999}, {"S", 32.065},
 };
 
 Atom *create_atom() {
     Atom *atom = malloc(sizeof(Atom));
     atom->index = -1;
-    strcpy(atom->name, "none");
+    atom->name = malloc(5 * sizeof(char));
     atom->pos[0] = 0.0;
     atom->pos[1] = 0.0;
     atom->pos[2] = 0.0;
@@ -28,28 +26,18 @@ Atom *create_atom() {
     return atom;
 }
 
-Frame *create_frame(int num_atoms) {
+Frame *create_frame(int num) {
     Frame *frame = malloc(sizeof(Frame));
-    frame->num_atoms = num_atoms;
-    frame->atoms = malloc(num_atoms * sizeof(Atom *));
+    frame->num_atoms = num;
+    frame->atoms = malloc(num * sizeof(Atom));
     frame->box[0] = 0.0;
     frame->box[1] = 0.0;
     frame->box[2] = 0.0;
-    for (int i = 0; i < num_atoms; i++) {
+    for (int i = 0; i < num; i++) {
+        // printf("%d\n", i);
         frame->atoms[i] = *create_atom();
     }
     return frame;
-}
-
-Rdf *create_rdf(float min, float max, float step) {
-    Rdf *rdf = malloc(sizeof(Rdf));
-    int bins = (int)((max - min) / step);
-    rdf->dr = step;
-    rdf->r_max = max;
-    rdf->num_bins = bins;
-    rdf->g_r = malloc(bins * sizeof(float));
-    rdf->n_r = malloc(bins * sizeof(float));
-    return rdf;
 }
 
 int is_number(char *str) {
@@ -61,62 +49,51 @@ int is_number(char *str) {
     return 1;
 }
 
-void split_atom(Atom *atom, char *line) {
-    char *token;
-    token = strtok(line, " ");  // Used to point the the next token
-    atom->index = atoi(token);
-    token = strtok(NULL, " ");
-    strcpy(atom->name, token);
-    token = strtok(NULL, " ");
-    atom->pos[0] = atof(token);
-    token = strtok(NULL, " ");
-    atom->pos[1] = atof(token);
-    token = strtok(NULL, " ");
-    atom->pos[2] = atof(token);
-    token = strtok(NULL, " ");
-    atom->type = atof(token);
-}
-
-void split_box(Frame *fr, char *line) {
-    char *token;
-    token = strtok(line, " ");  // Used to point the the next token
-    fr->box[0] = atof(token);
-    token = strtok(NULL, " ");
-    fr->box[1] = atof(token);
-    token = strtok(NULL, " ");
-    fr->box[2] = atof(token);
-}
-
-void update_frame(Frame *fr, FILE *f, long begin, int *sele) {
+void update_frame(Frame *fr, FILE *f, long begin, int selection_size,
+                  long *offsets) {
     char c;
-    int num_lines = 0;
-    int bytes = 0;
     int counter = 0;
-    char *line = malloc(BUFFER);
+    int num_lines = 0;
+    char *tmp = malloc(BUFFER);
 
-    fseek(f, begin, SEEK_SET);  // Sets the start to begin reading the file
-    while (bytes < num_bytes) {
+    fseek(f, begin, SEEK_SET);
+    while (1) {
         c = fgetc(f);
-        bytes++;
-        if (c != '\n') {
-            line[counter] = c;
-            counter++;
-        } else {
-            if (num_lines != 0) {
-                if (num_lines == 1) {
-                    split_box(fr, line);
-                } else {
-                    // ignores header lines fails for NVE
-                    split_atom(&fr->atoms[num_lines - HEADER], line);
-                }
+        if (c == EOF) {
+            exit(0);
+        }
+        tmp[counter] = c;
+        counter++;
+        if (c == '\n') {
+            if (num_lines == HEADER - 1) {
+                break;
             }
-            // Clear the buffer of all the trash
-            memset(line, '\0', BUFFER);
-            num_lines++;
             counter = 0;
+            memset(tmp, '\0', BUFFER);
+            num_lines++;
         }
     }
-    free(line);
+
+    sscanf(tmp, "%lf %lf %lf", &fr->box[0], &fr->box[1], &fr->box[2]);
+
+    counter = 0;
+    memset(tmp, '\0', BUFFER);
+    for (int i = 0; i < selection_size; i++) {
+        fseek(f, begin + offsets[i], SEEK_SET);
+        while ((c = fgetc(f)) != '\n') {
+            if (c == EOF) {
+                exit(0);
+            }
+            tmp[counter] = c;
+            counter++;
+        }
+        sscanf(tmp, "%d %s %lf %lf %lf %d", &fr->atoms[i].index,
+               fr->atoms[i].name, &fr->atoms[i].pos[0], &fr->atoms[i].pos[1],
+               &fr->atoms[i].pos[2], &fr->atoms[i].type);
+        counter = 0;
+        memset(tmp, '\0', BUFFER);
+    }
+    free(tmp);
 }
 
 void print_atom(Atom *atom) {
@@ -125,41 +102,24 @@ void print_atom(Atom *atom) {
 }
 
 void print_frame(Frame *fr) {
+    printf("    BOX: %12.6f %12.6f %12.6f\n", fr->box[0], fr->box[1],
+           fr->box[2]);
     for (int i = 0; i < fr->num_atoms; i++) {
         print_atom(&fr->atoms[i]);
     }
 }
 
-void compute_com(Frame *fr, int frame) {
-    bool found = false;
+void compute_com(Frame *fr) {
+    bool found;
     double *com = calloc(DIM, sizeof(double));
     double total_mass = 0.0;
     for (int i = 0; i < fr->num_atoms; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (strcmp(mass_map[j].key, fr->atoms[i].name) == 0) {
+        found = false;
+        for (int j = 0; j < 5; j++) {
+            if (*mass_map[j].key == fr->atoms[i].name[0]) {
                 for (int k = 0; k < DIM; k++) {
                     com[k] += mass_map[j].value * fr->atoms[i].pos[k];
                 }
-                total_mass += mass_map->value;
-                found = true;
-                break;
-            }
-        }
-        if (found == false) {
-            printf("No mass found for atom %s", fr->atoms[i].name);
-            exit(1);
-        }
-    }
-    printf("%8d %12.6f %12.6f %12.6f\n", frame, com[0] / total_mass,
-           com[1] / total_mass, com[2] / total_mass);
-}
-
-double compute_mass(Frame *fr) {
-    bool found = false;
-    double total_mass = 0.0;
-    for (int i = 0; i < fr->num_atoms; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (strcmp(mass_map[j].key, fr->atoms[i].name) == 0) {
                 total_mass += mass_map[j].value;
                 found = true;
                 break;
@@ -170,10 +130,11 @@ double compute_mass(Frame *fr) {
             exit(1);
         }
     }
-    return total_mass;
+    printf("%12.6f %12.6f %12.6f\n", com[0] / total_mass, com[1] / total_mass,
+           com[2] / total_mass);
 }
 
-double *compute_distance(Frame *fr, int selected) {
+void compute_distance(Frame *fr, int selected) {
     double ref[3] = {fr->atoms[selected].pos[0], fr->atoms[selected].pos[1],
                      fr->atoms[selected].pos[2]};
     double *distances = calloc(fr->num_atoms, sizeof(double));
@@ -186,13 +147,6 @@ double *compute_distance(Frame *fr, int selected) {
             distances[i] += pow(tmp, 2);
         }
         distances[i] = sqrt(distances[i]);
-    }
-    return distances;
-}
-
-void compute_rdf(Frame *fr, Rdf *rdf, int selected) {
-    double *dists = compute_distance(fr, selected);
-    for (int i = 0; i < fr->num_atoms; i++) {
-        printf("%d %f\n", i, dists[i]);
+        printf("%f\n", distances[i]);
     }
 }
