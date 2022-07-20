@@ -3,7 +3,6 @@
 #define BUFFER 1000
 #define DIM 3
 #define HEADER 2
-#define MAXINDEX 10000000
 #define AU_TO_GCC 1.6605402
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 

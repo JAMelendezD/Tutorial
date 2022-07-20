@@ -11,9 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-Map mass_map[] = {
-    {"H", 1.0078}, {"C", 12.011}, {"N", 14.007}, {"O", 15.999}, {"S", 32.065},
-};
+#define NMAPS sizeof(mass_map) / sizeof(struct Map)
+
+Map mass_map[] = {{"H", 1.0078}, {"C", 12.011}, {"N", 14.007},
+                  {"O", 15.999}, {"S", 32.065}, {"P", 30.9738}};
 
 Atom *create_atom() {
     Atom *atom = malloc(sizeof(Atom));
@@ -34,7 +35,6 @@ Frame *create_frame(int num) {
     frame->box[1] = 0.0;
     frame->box[2] = 0.0;
     for (int i = 0; i < num; i++) {
-        // printf("%d\n", i);
         frame->atoms[i] = *create_atom();
     }
     return frame;
@@ -115,7 +115,7 @@ void compute_com(Frame *fr) {
     double total_mass = 0.0;
     for (int i = 0; i < fr->num_atoms; i++) {
         found = false;
-        for (int j = 0; j < 5; j++) {
+        for (int j = 0; j < NMAPS; j++) {
             if (*mass_map[j].key == fr->atoms[i].name[0]) {
                 for (int k = 0; k < DIM; k++) {
                     com[k] += mass_map[j].value * fr->atoms[i].pos[k];

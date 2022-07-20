@@ -62,29 +62,32 @@ Map *read_index(char *ndx, int *num_options) {
 
 int *get_indeces(char *ndx, int num, int *size) {
     FILE *f;
-    int groups = -2;
-    int count = 0;
-    char *tmp = malloc(BUFFER);
-    int *indeces = malloc(MAXINDEX * sizeof(int));
+    int groups = -1;
+    char c;
+    int tmp;
+    int *indeces = malloc(0);
 
     f = fopen(ndx, "r");
-    while (fscanf(f, "%s", tmp) != EOF) {
-        if (is_number(tmp)) {
-            indeces[count] = atoi(tmp);
-            count++;
-        } else {
-            groups++;
+    while ((c = fgetc(f)) != EOF) {
+        if (c == '[') {
             if (groups == num) {
                 break;
+            } else {
+                *size = 0;
+                groups++;
+                while ((c = fgetc(f)) != ']') {
+                }
             }
-            count = 0;
+        } else {
+            if (groups == num) {
+                indeces = realloc(indeces, ++(*size) * sizeof(int));
+                fscanf(f, " %d", &tmp);
+                indeces[*size - 1] = tmp;
+            }
         }
     }
-    realloc(indeces, count * sizeof(int));
-    *size = count;
-    free(tmp);
+    (*size)--;
     fclose(f);
-
     return indeces;
 }
 
@@ -150,7 +153,7 @@ long *get_selection_offsets(char *arc, int *selection, int num_atoms,
 
         if (c == '\n') {
             for (int i = 0; i < selection_size; i++) {
-                if ((num_lines - HEADER) == selection[i] - 1) {
+                if ((num_lines - HEADER) == selection[i] - 2) {
                     byte_arr[i] = bytes;
                     break;
                 }
@@ -202,35 +205,32 @@ int main(int argc, char **argv) {
             }
         } else if (strcmp(argv[iarg], "-n") == 0) {
             if (iarg + 1 == argc) {
-                fprintf(stderr, "Error: Missing index file.\n");
+                printf("Error: Missing index file.\n");
                 usage(argv[0]);
             }
             iarg++;
             if (sscanf(argv[iarg], "%s", ndx) != 1) {
-                fprintf(stderr, "Error: Invalid frame to start: %s\n",
-                        argv[iarg]);
+                printf("Error: Invalid frame to start: %s\n", argv[iarg]);
                 usage(argv[0]);
             }
         } else if (strcmp(argv[iarg], "-b") == 0) {
             if (iarg + 1 == argc) {
-                fprintf(stderr, "Error: Missing start frame.\n");
+                printf("Error: Missing start frame.\n");
                 usage(argv[0]);
             }
             iarg++;
             if (sscanf(argv[iarg], "%ld", &b) != 1 || b < 0) {
-                fprintf(stderr, "Error: Invalid frame to start: %s\n",
-                        argv[iarg]);
+                printf("Error: Invalid frame to start: %s\n", argv[iarg]);
                 usage(argv[0]);
             }
         } else if (strcmp(argv[iarg], "-e") == 0) {
             if (iarg + 1 == argc) {
-                fprintf(stderr, "Error: Missing end frame.\n");
+                printf("Error: Missing end frame.\n");
                 usage(argv[0]);
             }
             iarg++;
             if (sscanf(argv[iarg], "%ld", &e) != 1 || e < b) {
-                fprintf(stderr, "Error: Invalid frame to end: %s\n",
-                        argv[iarg]);
+                printf("Error: Invalid frame to end: %s\n", argv[iarg]);
                 usage(argv[0]);
             }
         } else {
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
 
     // Based on user input creates an array with the indeces
     indeces = get_indeces(ndx, selection, &selection_size);
-    printf("# Number of atoms in selection: %d\n", selection_size);
+    printf("\n# Number of atoms in selection: %d\n", selection_size);
 
     // Computes the number of atoms based on the first line
     int num_atoms = get_num_atoms(arc);
@@ -279,9 +279,9 @@ int main(int argc, char **argv) {
     for (int i = b; i <= e; i++) {
         update_frame(arc_frame, arc_file, i * frame_size, selection_size,
                      offsets);
-        print_frame(arc_frame);
-        // compute_com(arc_frame);
-        // compute_distance(arc_frame, 0);
+        // print_frame(arc_frame);
+        compute_com(arc_frame);
+        //  compute_distance(arc_frame, 0);
     }
     fclose(arc_file);
     free(arc_frame);

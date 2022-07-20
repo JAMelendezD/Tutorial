@@ -74,12 +74,13 @@ def write_index(index : dict, out : str) -> None:
     f = open(out, 'w')
 
     for key in index.keys():
-        f.write(f"[{key:^s}]\n")
+        f.write(f"[ {key:^s} ]")
         for i, ind in enumerate(index[key]):
-            if (i + 1) % 5 == 0:
-                f.write(f"{ind:>8s}\n")
+            ind = int(ind) + 1
+            if  i  % 15 == 0:
+                f.write(f"\n{ind:>4d}")
             else:
-                f.write(f"{ind:>8s}")
+                f.write(f" {ind:>4d}")
         f.write("\n")
     return
 
