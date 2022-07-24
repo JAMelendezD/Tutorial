@@ -40,15 +40,6 @@ Frame *create_frame(int num) {
     return frame;
 }
 
-int is_number(char *str) {
-    if (*str == '\0') return 0;
-    while (*str != '\0') {
-        if (!isdigit(*str)) return 0;
-        str++;
-    }
-    return 1;
-}
-
 void update_frame(Frame *fr, FILE *f, long begin, int selection_size,
                   long *offsets) {
     char c;

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../include/tools.h"
 
@@ -167,10 +168,10 @@ long *get_selection_offsets(char *arc, int *selection, int num_atoms,
 
 void usage(char *name) {
     printf("Usage: %s -f <.arc or .xyz> -n <.ndx> -b <int> -e <int>\n", name);
-    printf("  -f: Trajectory file in an arc format.\n");
-    printf("  -n: Index file.\n");
-    printf("  -b: First frame starts at 0.\n");
-    printf("  -e: Last frame to analyze (inclusive).\n");
+    printf("  -f: Trajectory file in an arc format (required).\n");
+    printf("  -n: Index file (required).\n");
+    printf("  -b: First frame starts at 0 (optional).\n");
+    printf("  -e: Last frame to analyze (optional, inclusive).\n");
     exit(1);
 }
 
@@ -237,6 +238,20 @@ int main(int argc, char **argv) {
             printf("Error: Unknown argument: %s\n", argv[iarg]);
             usage(argv[0]);
         }
+    }
+
+    // Check if arc file can be opened
+    if (access(arc, F_OK) != 0) {
+        printf("Could not open arc file\n");
+        usage(argv[0]);
+        exit(1);
+    }
+
+    // Check if index file can be open
+    if (access(ndx, F_OK) != 0) {
+        printf("Could not open index file\n");
+        usage(argv[0]);
+        exit(1);
     }
 
     // Reads index file to figure out available options

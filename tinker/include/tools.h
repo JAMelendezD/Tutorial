@@ -35,11 +35,6 @@ Atom *create_atom();
 Frame *create_frame(int num_atoms);
 
 /*
- * Checks if all the characters in a string are integers
- */
-int is_number(char *str);
-
-/*
  * Uses seek to find figure out where to start reading the arc file.
  * Reads the atom in that frame and updates the frame struct.
  */

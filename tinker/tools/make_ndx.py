@@ -7,34 +7,36 @@ import numpy as np
 import readline
 import os
 
-logic_info = {"&"      : "Logical and operator (separated by white space)", 
-              "|"      : "Logical or operator (separated by white space)",
-              "-"      : "Subtracts two groups (separated by white space)",
-              ":"      : "Assign operator (no white space)"}
+logic_info = {"&": "Logical and operator (separated by white space)",
+              "|": "Logical or operator (separated by white space)",
+              "-": "Subtracts two groups (separated by white space)",
+              ":": "Assign operator (no white space)"}
 
-sele_info =  {"a"      : "Atom name",
-              "t"      : "Atom type",
-              "g"      : "Index group"}
+sele_info = {"a": "Atom name",
+             "t": "Atom type",
+             "i": "Index",
+             "g": "Index group"}
 
-other_info = {"n"      : "Rename selected group",
-              "d"      : "Delete selected group",
-              "q"      : "Quit and save the index",
-              "Enter"  : "List groups"}
+other_info = {"n": "Rename selected group",
+              "d": "Delete selected group",
+              "q": "Quit and save the index",
+              "Enter": "List groups"}
 
 I = "\x1b[38;2;255;200;105;208m"    # Information color (Yellow)
 G = "\x1b[38;2;120;255;105;208m"    # Selection color (Green)
-O = "\x1b[38;2;120;105;235;208m"    # Not used (Blue) 
+O = "\x1b[38;2;120;105;235;208m"    # Not used (Blue)
 E = "\x1b[38;2;255;55;50;208m"      # Error color (Red)
 R = "\x1b[0m"                       # Reset color
 
-def backup(fname : str, counter : int) -> str:
+
+def backup(fname: str, counter: int) -> str:
     '''
     Uses recursion to check if file name exists. If it exists then it
     checks if the backup also exists and so on. Returns a file name
     to create a backup with a name that does not exist 
     '''
     exists = os.path.exists('{}'.format(fname))
-    if exists ==  False:
+    if exists == False:
         return fname
     else:
         fname = fname.split('#')[-1]
@@ -43,7 +45,8 @@ def backup(fname : str, counter : int) -> str:
         counter += 1
         return backup(fname, counter)
 
-def read_index(index : str) -> dict:
+
+def read_index(index: str) -> dict:
     '''
     Reads index file and converts it to a dicionary were the key
     is the name of the group and the value is a list of indeces
@@ -55,10 +58,11 @@ def read_index(index : str) -> dict:
                 key = line[line.find('[')+1:line.find(']')].strip()
                 dic[key] = []
             else:
-                dic[key] += line.split()   
+                dic[key] += line.split()
     return dic
 
-def write_index(index : dict, out : str) -> None:
+
+def write_index(index: dict, out: str) -> None:
     '''
     Uses backup to get an appropriate name for the output. Then it takes the
     index and prints it to the output file
@@ -67,7 +71,8 @@ def write_index(index : dict, out : str) -> None:
     if out == new_name:
         os.system(f"touch {out}")
     else:
-        print(I+f"Found a file with the same name backing it up to {new_name}"+R)
+        print(
+            I+f"Found a file with the same name backing it up to {new_name}"+R)
         os.system(f"mv {out} '{new_name}'")
         os.system(f"touch {out}")
 
@@ -77,14 +82,15 @@ def write_index(index : dict, out : str) -> None:
         f.write(f"[ {key:^s} ]")
         for i, ind in enumerate(index[key]):
             ind = int(ind) + 1
-            if  i  % 15 == 0:
+            if i % 15 == 0:
                 f.write(f"\n{ind:>4d}")
             else:
                 f.write(f" {ind:>4d}")
         f.write("\n")
     return
 
-def read_xyz(xyz : str) -> tuple[np.array(int), np.array(int)]:
+
+def read_xyz(xyz: str) -> tuple[np.array(int), np.array(int)]:
     '''
     Reads input xyz and extracts the atom names and the atoms types
     '''
@@ -111,22 +117,23 @@ def read_xyz(xyz : str) -> tuple[np.array(int), np.array(int)]:
         ignore = 2
     else:
         print(E+"XYZ seems to be incorrected or not in tinker format"+R)
-        exit(1) 
+        exit(1)
 
     print(I+f"Number of atoms: {num_atoms:10d}"+R)
 
     # If files follows tinker format names and types
     # can be extracted as follows
     try:
-        names = np.loadtxt(xyz, usecols = [1], dtype = str, skiprows = ignore)
-        types = np.loadtxt(xyz, usecols = [5], dtype = int, skiprows = ignore)
+        names = np.loadtxt(xyz, usecols=[1], dtype=str, skiprows=ignore)
+        types = np.loadtxt(xyz, usecols=[5], dtype=int, skiprows=ignore)
     except:
         print(E+"XYZ seems to be incorrected or not in tinker format"+R)
-        exit(1) 
+        exit(1)
 
     return names, types
 
-def get_index_values(command : str, selection : dict, index : dict) -> list:
+
+def get_index_values(command: str, selection: dict, index: dict) -> list:
     '''
     Based on the available options it computes the appropriate index list.
     if a: matches the name to the list of names or a letter to start with 
@@ -140,21 +147,21 @@ def get_index_values(command : str, selection : dict, index : dict) -> list:
     else:
         option = command.split(":")[0]
         value = command.split(":")[1]
-    
+
     if option == 'a':
         tmp = value.split("*")
         if len(tmp) == 1:
-            return list(np.array(np.where(names == value), dtype = str)[0])
+            return list(np.array(np.where(names == value), dtype=str)[0])
         else:
             bool_arr = np.char.startswith(names, tmp[0])
-            return list(np.array(np.where(bool_arr), dtype = str)[0])
+            return list(np.array(np.where(bool_arr), dtype=str)[0])
     elif option == 't':
         try:
             value = int(value)
-            return list(np.array(np.where(types == value), dtype = str)[0])
+            return list(np.array(np.where(types == value), dtype=str)[0])
         except:
             print(E+"The type given cant be converted into an integer"+R)
-            return 
+            return
     elif option == 'g':
         num = int(value)
         if num in selection.keys():
@@ -162,11 +169,31 @@ def get_index_values(command : str, selection : dict, index : dict) -> list:
         else:
             print(E+f"Selection group {value:s} not found"+R)
             return
+    elif option == 'i':
+        numbers = value.split("-")
+        if len(numbers) != 2:
+            print(E+"Invalid range provided"+R)
+            return
+        try:
+            begin = int(value.split("-")[0])
+            end = int(value.split("-")[1])
+        except:
+            print(E+"The type given cant be converted into an integer"+R)
+            return
+
+        if begin < 1 or begin >= end:
+            print(E+"Index provided too small or smaller than the end"+R)
+        else:
+            if end > MAX_INDEX:
+                print(E+"Index provided to small or smaller than the end"+R)
+            else:
+                return list(range(begin - 1, end))
     else:
         print(E+f"Selection option {option:s} not available"+R)
-        return 
+        return
 
-def evaluate_pair(group1 : list, group2: list, operator) -> list:
+
+def evaluate_pair(group1: list, group2: list, operator) -> list:
     '''
     Takes two lists and one operator. Converts the list to sets and
     applies the operation between them. Returns the result as a sorted list
@@ -175,10 +202,11 @@ def evaluate_pair(group1 : list, group2: list, operator) -> list:
         return
     expression = f"set(group1) {operator} set(group2)"
     result = list(eval(expression))
-    result.sort(key = int)
+    result.sort(key=int)
     return result
 
-def evaluate_expression(exp : str, selection: dict, index : dict) -> tuple[list, str]:
+
+def evaluate_expression(exp: str, selection: dict, index: dict) -> tuple[list, str]:
     '''
     Uses evaluate pair to evaluate any expression by splitting into expressions
     of two lists and one operator. 
@@ -187,7 +215,7 @@ def evaluate_expression(exp : str, selection: dict, index : dict) -> tuple[list,
     name = ""
     if len(elements) % 2 == 0:  # Expressions should be uneven number of terms
         print(E+"Malformed expression"+R)
-        return
+        return None, None
     else:
         # This two variables are needed to get the first case
         # since the empty set or any other set gives the other
@@ -207,20 +235,22 @@ def evaluate_expression(exp : str, selection: dict, index : dict) -> tuple[list,
                 if operator not in logic_info.keys():
                     print(E+f"Operator ({operator:s}) not available"+R)
                     return None, None
-    
+
     return group1, name
 
-def update_selection(index : dict) -> dict:
+
+def update_selection(index: dict) -> dict:
     '''
     Gets called everytime index changes. It updates the selection dictionary
     based on the modified index
     '''
     selection = {}
     for i, key in enumerate(index.keys()):
-        selection[i] = key 
+        selection[i] = key
     return selection
 
-def print_options(index : dict) -> None:
+
+def print_options(index: dict) -> None:
     '''
     Outputs to stdout all the options of the program as well as the index
     groups
@@ -243,6 +273,7 @@ def print_options(index : dict) -> None:
         print(f"({key:^5s}) {value:s}")
     print(80*"#")
 
+
 def print_examples():
     print(80*"#")
     print(O+"Examples:"+R)
@@ -252,14 +283,19 @@ def print_examples():
     print(O+"a:OW | a:HW   (selects all water)"+R)
     print(O+"g:0 - g:1     (all - water gives non water atoms)"+R)
 
+
 if __name__ == "__main__":
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description="Creates and index file based on a tinker xyz.")
-    parser.add_argument("--xyz","-f",help="tinker XYZ file",type=str,required=True)
-    parser.add_argument("--ndx","-n",help="Index file",type=str,default=None)    
-    parser.add_argument("--out","-o",help="Output file",type=str,default="index.ndx")
+    parser = ArgumentParser(
+        description="Creates and index file based on a tinker xyz.")
+    parser.add_argument("--xyz", "-f", help="tinker XYZ file",
+                        type=str, required=True)
+    parser.add_argument("--ndx", "-n", help="Index file",
+                        type=str, default=None)
+    parser.add_argument("--out", "-o", help="Output file",
+                        type=str, default="index.ndx")
     args = parser.parse_args()
 
     names, types = read_xyz(args.xyz)
@@ -267,11 +303,13 @@ if __name__ == "__main__":
         index = read_index(args.ndx)
     else:
         index = {}
+        all = list(np.array(np.arange(0, len(names)), dtype=str))
+        index["System"] = all
+
+    MAX_INDEX = len(names)
 
     print_examples()
-    
-    all = list(np.array(np.arange(0, len(names)), dtype = str))
-    index["all"] = all
+
     selection = update_selection(index)
     print_options(index)
 
@@ -281,7 +319,7 @@ if __name__ == "__main__":
             write_index(index, args.out)
             break
         elif inp.strip() == "":
-            print_options(index) 
+            print_options(index)
         elif inp.strip()[0:2] in ["n:", "d:"]:
             if inp.strip()[0:2] == "d:":
                 try:
@@ -302,7 +340,8 @@ if __name__ == "__main__":
                     try:
                         value = int(tmp[0].split(":")[-1])
                     except:
-                        print(E+"Value given to delete cant be converted to an integer"+R)
+                        print(
+                            E+"Value given to delete cant be converted to an integer"+R)
                     if value in selection.keys():
                         old_keys = list(index.keys())
                         num = list(selection.keys())
@@ -321,7 +360,7 @@ if __name__ == "__main__":
                     print(E+f"Empty group {name:s} not created"+R)
                 else:
                     if name not in index.keys():
-                        index[name] = new_group # Adds new group to index
+                        index[name] = new_group  # Adds new group to index
                         selection = update_selection(index)
                     else:
                         print(E+f"Repeated group {name:s} not created"+R)
